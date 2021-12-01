@@ -12,7 +12,9 @@ pytest = "^6.2.5"
 black = "^21.11b1"
 
 [tool.poetry.scripts]
-day_01 = "aoc.day_01:main"
+day_01_1 = "aoc.day_01_1:main"
+day_01_2 = "aoc.day_01_2:main"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
