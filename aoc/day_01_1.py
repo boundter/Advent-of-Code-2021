@@ -1,29 +1,19 @@
-import itertools
-import importlib.resources
+import functools
 import typing
 
-
-def pairwise(iterable):
-    # backported from itertools
-    a, b = itertools.tee(iterable)
-    next(b, None)
-    return zip(a, b)
+import aoc.util
 
 
 def depth_measurement(measurements: typing.List[int]) -> int:
-    increases = 0
-    for previous, current in pairwise(measurements):
-        increases += int(current > previous)
-    return increases
-
-
-def read_file(filename: str) -> typing.List[int]:
-    data = importlib.resources.read_text("aoc.resources", filename).splitlines()
-    return map(int, data)
+    return functools.reduce(
+        lambda count, pair: count + int(pair[1] > pair[0]),
+        aoc.util.pairwise(measurements),
+        0,
+    )
 
 
 def main():
-    measurements = read_file("day_01.txt")
+    measurements = map(int, aoc.util.read_file("day_01.txt").splitlines())
     print(depth_measurement(measurements))
 
 
