@@ -14,7 +14,8 @@ black = "^21.11b1"
 [tool.poetry.scripts]
 day_01_1 = "aoc.day_01_1:main"
 day_01_2 = "aoc.day_01_2:main"
-
+day_02_1 = "aoc.day_02_1:main"
+day_02_2 = "aoc.day_02_2:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
