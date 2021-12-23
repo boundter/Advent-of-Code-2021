@@ -1,8 +1,13 @@
-import aoc.day_04_2
+import typing
+
+import pytest
+
+import aoc.day_04
 
 
-def test_find_losing_board():
-    numbers = [
+@pytest.fixture
+def numbers() -> typing.List[int]:
+    return [
         7,
         4,
         9,
@@ -31,8 +36,12 @@ def test_find_losing_board():
         26,
         1,
     ]
-    boards = [
-        aoc.day_04_1.BingoBoard(
+
+
+@pytest.fixture
+def boards() -> typing.List[aoc.day_04.BingoBoard]:
+    return [
+        aoc.day_04.BingoBoard(
             [
                 [22, 13, 17, 11, 0],
                 [8, 2, 23, 4, 24],
@@ -41,7 +50,7 @@ def test_find_losing_board():
                 [1, 12, 20, 15, 19],
             ]
         ),
-        aoc.day_04_1.BingoBoard(
+        aoc.day_04.BingoBoard(
             [
                 [3, 15, 0, 2, 22],
                 [9, 18, 13, 17, 5],
@@ -50,7 +59,7 @@ def test_find_losing_board():
                 [14, 21, 16, 12, 6],
             ]
         ),
-        aoc.day_04_1.BingoBoard(
+        aoc.day_04.BingoBoard(
             [
                 [14, 21, 17, 24, 4],
                 [10, 16, 15, 9, 19],
@@ -60,4 +69,11 @@ def test_find_losing_board():
             ]
         ),
     ]
-    assert aoc.day_04_2.find_losing_board(numbers, boards) == 1924
+
+
+def test_find_winning_board(numbers, boards):
+    assert aoc.day_04.find_winning_board(numbers, boards) == 4512
+
+
+def test_find_losing_board(numbers, boards):
+    assert aoc.day_04.find_losing_board(numbers, boards) == 1924
