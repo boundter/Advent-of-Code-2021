@@ -1,13 +1,19 @@
+import typing
+
 import more_itertools
-from more_itertools import more
+import pytest
 
-import aoc.day_06_1
+import aoc.day_06
 
 
-def test_LampfishPopulation_population():
-    doubling_time = 7
-    population = [0, 1, 1, 2, 1, 0, 0, 0, 0]
-    lampfishes = aoc.day_06_1.LampfishPopulation(
+@pytest.fixture
+def initial() -> typing.Tuple[int, typing.List[int]]:
+    return 7, [0, 1, 1, 2, 1, 0, 0, 0, 0]
+
+
+def test_LampfishPopulation_population(initial):
+    doubling_time, population = initial
+    lampfishes = aoc.day_06.LampfishPopulation(
         day=0, doubling_time=doubling_time, population=population
     )
     next(lampfishes)
@@ -23,11 +29,18 @@ def test_LampfishPopulation_population():
     assert lampfishes.population == [0, 0, 0, 1, 1, 3, 2, 2, 1]
 
 
-def test_LampfishPopulation_count():
-    doubling_time = 7
-    population = [0, 1, 1, 2, 1, 0, 0, 0, 0]
-    lampfishes = aoc.day_06_1.LampfishPopulation(
+def test_LampfishPopulation_count_small(initial):
+    doubling_time, population = initial
+    lampfishes = aoc.day_06.LampfishPopulation(
         day=0, doubling_time=doubling_time, population=population
     )
     assert more_itertools.nth(lampfishes, 18) == 26
     assert more_itertools.nth(lampfishes, 80 - 18 - 1) == 5934
+
+
+def test_LampfishPopulation_count(initial):
+    doubling_time, population = initial
+    lampfishes = aoc.day_06.LampfishPopulation(
+        day=0, doubling_time=doubling_time, population=population
+    )
+    assert more_itertools.nth(lampfishes, 256) == 26984457539
