@@ -19,8 +19,7 @@ day_03 = "aoc.day_03:main"
 day_04 = "aoc.day_04:main"
 day_05 = "aoc.day_05:main"
 day_06 = "aoc.day_06:main"
-day_07_1 = "aoc.day_07_1:main"
-day_07_2 = "aoc.day_07_2:main"
+day_07 = "aoc.day_07:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
