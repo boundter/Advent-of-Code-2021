@@ -129,7 +129,9 @@ Adding all of the output values in this larger example produces 61229.
 
 For each entry, determine all of the wire/segment connections and decode the four-digit output values. What do you get if you add up all of the output values?
 
+Your puzzle answer was 1010460.
 """
+from fnmatch import translate
 import typing
 import itertools
 import functools
@@ -156,49 +158,86 @@ def count_simple_digits(output_vals: typing.Iterable[str]) -> int:
     return sum([int(len(val) in set([2, 3, 4, 7])) for val in output_vals])
 
 
-def translate_output(clue: typing.Iterable[str], output: typing.Iterable[str]) -> int:
-    simple_digits_length = {
-        key: len(value) for key, value in NUMBERS.items() if key in [1, 4, 7, 8]
-    }
+def _lookup_clue_by_length(
+    clue: typing.Iterable[str],
+) -> typing.Dict[int, typing.Tuple[typing.Set[str]]]:
     clue_by_length = defaultdict(lambda: ())
     for c in clue:
         clue_by_length[len(c)] = clue_by_length[len(c)] + (set(c),)
-    translation = {
-        "a": clue_by_length[simple_digits_length[7]][0].difference(
-            clue_by_length[simple_digits_length[1]][0]
-        ),
-        "b": clue_by_length[simple_digits_length[4]][0]
-        .difference(clue_by_length[simple_digits_length[1]][0])
-        .intersection(functools.reduce(set.intersection, clue_by_length[6])),
-    }
+    return clue_by_length
+
+
+def _union_of_translation(
+    translation: typing.Dict[str, typing.Set[str]]
+) -> typing.Set[str]:
+    return functools.reduce(
+        lambda union, key: union.union(translation[key]), translation, set()
+    )
+
+
+def _union_of(clues: typing.Tuple[typing.Set[str]]) -> typing.Set[str]:
+    return functools.reduce(set.intersection, clues)
+
+
+def _create_translation(clue_by_length: typing.Dict[int, str]) -> typing.Dict[str, str]:
+    # As a shorthand use n for intersection and \ for without
+    translation = {}
+    # {a} = 7 \ 1
+    translation["a"] = clue_by_length[3][0].difference(clue_by_length[2][0])
+    # {b} = (4 \ 1) n (9 n 6 n 0) (all with length 6)
+    translation["b"] = (
+        clue_by_length[4][0]
+        .difference(clue_by_length[2][0])
+        .intersection(_union_of(clue_by_length[6]))
+    )
+    # {d} = (4 \ 1) \ {b}
     translation["d"] = (
-        clue_by_length[simple_digits_length[4]][0]
-        .difference(clue_by_length[simple_digits_length[1]][0])
-        .difference(translation["b"])
+        clue_by_length[4][0]
+        .difference(clue_by_length[2][0])
+        .difference(_union_of_translation(translation))
     )
-    translation["g"] = functools.reduce(set.intersection, clue_by_length[5]).difference(
-        translation["a"].union(translation["d"])
+    # {g} = (2 n 3 n 5) \ {a ,d}
+    translation["g"] = _union_of(clue_by_length[5]).difference(
+        _union_of_translation(translation)
     )
-    translation["f"] = functools.reduce(set.intersection, clue_by_length[6]).difference(
-        translation["a"].union(translation["b"]).union(translation["g"])
+    # {f} = (9 n 6 n 0) \ {a, b, g}
+    translation["f"] = _union_of(clue_by_length[6]).difference(
+        _union_of_translation(translation)
     )
-    translation["c"] = clue_by_length[simple_digits_length[1]][0].difference(
-        translation["f"]
+    # {c} = 1 \ {f}
+    translation["c"] = clue_by_length[2][0].difference(
+        _union_of_translation(translation)
     )
-    translation["e"] = clue_by_length[simple_digits_length[8]][0].difference(
-        translation["a"]
-        .union(translation["b"])
-        .union(translation["c"])
-        .union(translation["d"])
-        .union(translation["f"])
-        .union(translation["g"])
+    # {e} = 8 \ {a, b, c, d, f, g}
+    translation["e"] = clue_by_length[7][0].difference(
+        _union_of_translation(translation)
     )
-    numbers_display = {
-        "".join(sorted(map(lambda s: list(translation[s])[0], value))): str(key)
+    return {key: value.pop() for key, value in translation.items()}
+
+
+def _translate_representation(
+    translation: typing.Dict[str, str], representation: str
+) -> str:
+    return "".join(sorted([translation[s] for s in representation]))
+
+
+def _translate_numbers(translation: typing.Dict[str, str]) -> typing.Dict[str, str]:
+    return {
+        _translate_representation(translation, "".join(value)): str(key)
         for key, value in NUMBERS.items()
     }
+
+
+def _lookup_number(translation: typing.Dict[str, str], representation: str) -> str:
+    return translation["".join(sorted(list(representation)))]
+
+
+def translate_output(clue: typing.Iterable[str], output: typing.Iterable[str]) -> int:
+    clue_by_length = _lookup_clue_by_length(clue)
+    translation = _create_translation(clue_by_length)
+    translated_representation = _translate_numbers(translation)
     num_string = "".join(
-        map(lambda s: numbers_display["".join(sorted(list(s)))], output)
+        map(lambda s: _lookup_number(translated_representation, s), output)
     )
     return int(num_string)
 
@@ -206,11 +245,22 @@ def translate_output(clue: typing.Iterable[str], output: typing.Iterable[str]) -
 def main():
     inp = aoc.util.read_file("day_08.txt").splitlines()
     digits_in, digits_out = zip(*map(lambda x: x.split(" | "), inp))
+    digits_in = list(digits_in)
+    digits_out = list(digits_out)
+    print("=== Part 1 ===")
     print(
         count_simple_digits(
             itertools.chain.from_iterable(map(lambda x: x.split(" "), digits_out))
         )
     )
+    print("=== Part 2 ===")
+    result = sum(
+        itertools.starmap(
+            lambda inp, outp: translate_output(inp.split(" "), outp.split(" ")),
+            zip(digits_in, digits_out),
+        )
+    )
+    print(result)
 
 
 if __name__ == "__main__":
