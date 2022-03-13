@@ -72,9 +72,69 @@ Because the digits 1, 4, 7, and 8 each use a unique number of segments, you shou
 In the output values, how many times do digits 1, 4, 7, or 8 appear?
 
 Your puzzle answer was 493.
+
+--- Part Two ---
+
+Through a little deduction, you should now be able to determine the remaining digits. Consider again the first example above:
+
+acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab |
+cdfeb fcadb cdfeb cdbaf
+
+After some careful analysis, the mapping between signal wires and segments only make sense in the following configuration:
+
+ dddd
+e    a
+e    a
+ ffff
+g    b
+g    b
+ cccc
+
+So, the unique signal patterns would correspond to the following digits:
+
+    acedgfb: 8
+    cdfbe: 5
+    gcdfa: 2
+    fbcad: 3
+    dab: 7
+    cefabd: 9
+    cdfgeb: 6
+    eafb: 4
+    cagedb: 0
+    ab: 1
+
+Then, the four digits of the output value can be decoded:
+
+    cdfeb: 5
+    fcadb: 3
+    cdfeb: 5
+    cdbaf: 3
+
+Therefore, the output value for this entry is 5353.
+
+Following this same process for each entry in the second, larger example above, the output value of each entry can be determined:
+
+    fdgacbe cefdb cefbgd gcbe: 8394
+    fcgedb cgb dgebacf gc: 9781
+    cg cg fdcagb cbg: 1197
+    efabcd cedba gadfec cb: 9361
+    gecf egdcabf bgf bfgea: 4873
+    gebdcfa ecba ca fadegcb: 8418
+    cefg dcbef fcge gbcadfe: 4548
+    ed bcgafe cdgba cbgef: 1625
+    gbdfcae bgc cg cgb: 8717
+    fgae cfgab fg bagce: 4315
+
+Adding all of the output values in this larger example produces 61229.
+
+For each entry, determine all of the wire/segment connections and decode the four-digit output values. What do you get if you add up all of the output values?
+
 """
 import typing
 import itertools
+import functools
+from collections import defaultdict
+import more_itertools
 
 import aoc.util
 
@@ -94,6 +154,53 @@ NUMBERS = {
 
 def count_simple_digits(output_vals: typing.Iterable[str]) -> int:
     return sum([int(len(val) in set([2, 3, 4, 7])) for val in output_vals])
+
+
+def translate_output(clue: typing.Iterable[str], output: typing.Iterable[str]) -> int:
+    simple_digits_length = {
+        key: len(value) for key, value in NUMBERS.items() if key in [1, 4, 7, 8]
+    }
+    clue_by_length = defaultdict(lambda: ())
+    for c in clue:
+        clue_by_length[len(c)] = clue_by_length[len(c)] + (set(c),)
+    translation = {
+        "a": clue_by_length[simple_digits_length[7]][0].difference(
+            clue_by_length[simple_digits_length[1]][0]
+        ),
+        "b": clue_by_length[simple_digits_length[4]][0]
+        .difference(clue_by_length[simple_digits_length[1]][0])
+        .intersection(functools.reduce(set.intersection, clue_by_length[6])),
+    }
+    translation["d"] = (
+        clue_by_length[simple_digits_length[4]][0]
+        .difference(clue_by_length[simple_digits_length[1]][0])
+        .difference(translation["b"])
+    )
+    translation["g"] = functools.reduce(set.intersection, clue_by_length[5]).difference(
+        translation["a"].union(translation["d"])
+    )
+    translation["f"] = functools.reduce(set.intersection, clue_by_length[6]).difference(
+        translation["a"].union(translation["b"]).union(translation["g"])
+    )
+    translation["c"] = clue_by_length[simple_digits_length[1]][0].difference(
+        translation["f"]
+    )
+    translation["e"] = clue_by_length[simple_digits_length[8]][0].difference(
+        translation["a"]
+        .union(translation["b"])
+        .union(translation["c"])
+        .union(translation["d"])
+        .union(translation["f"])
+        .union(translation["g"])
+    )
+    numbers_display = {
+        "".join(sorted(map(lambda s: list(translation[s])[0], value))): str(key)
+        for key, value in NUMBERS.items()
+    }
+    num_string = "".join(
+        map(lambda s: numbers_display["".join(sorted(list(s)))], output)
+    )
+    return int(num_string)
 
 
 def main():
